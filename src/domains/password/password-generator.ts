@@ -1,3 +1,5 @@
+import { formatDuration } from "@/shared/ui/lib/utils";
+
 export interface PasswordOptions {
   length: number;
   includeUppercase: boolean;
@@ -21,6 +23,16 @@ const SYMBOLS = '!@#$%^&*()_+-=[]{}|;:,.<>?';
 const SIMILAR_CHARS = 'iIl1Oo0';
 const AMBIGUOUS_CHARS = "{}[]()/\\'\"`~,;:.<>";
 
+/**
+ * Generate a cryptographically secure random password
+ * Uses crypto.getRandomValues for security (not Math.random)
+ */
+function getSecureRandomIndex(max: number): number {
+  const array = new Uint32Array(1);
+  crypto.getRandomValues(array);
+  return array[0] % max;
+}
+
 export function generatePassword(options: PasswordOptions): GeneratedPassword {
   let charset = '';
   
@@ -43,7 +55,7 @@ export function generatePassword(options: PasswordOptions): GeneratedPassword {
 
   let password = '';
   for (let i = 0; i < options.length; i++) {
-    password += charset.charAt(Math.floor(Math.random() * charset.length));
+    password += charset.charAt(getSecureRandomIndex(charset.length));
   }
 
   const entropy = calculateEntropy(password, charset.length);
@@ -69,16 +81,5 @@ function calculateStrength(entropy: number): 'weak' | 'medium' | 'strong' {
 export function calculateCrackTime(entropy: number): string {
   const attemptsPerSecond = 1000000000; // 1 billion attempts/sec
   const seconds = Math.pow(2, entropy) / attemptsPerSecond;
-
-  if (seconds < 1) return '< 1 second';
-  if (seconds < 60) return `${Math.ceil(seconds)} seconds`;
-  if (seconds < 3600) return `${Math.ceil(seconds / 60)} minutes`;
-  if (seconds < 86400) return `${Math.ceil(seconds / 3600)} hours`;
-  if (seconds < 31536000) return `${Math.ceil(seconds / 86400)} days`;
-  
-  const years = seconds / 31536000;
-  if (years < 1000000) return `${Math.ceil(years)} years`;
-  if (years < 1000000000) return `${Math.ceil(years / 1000000)} million years`;
-  
-  return `${Math.ceil(years / 1000000000)} billion years`;
+  return formatDuration(seconds);
 }

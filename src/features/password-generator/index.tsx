@@ -14,7 +14,7 @@ import { OptionToggle } from "./ui/option-toggle";
 export function PasswordGeneratorFeature() {
   const { toasts, show } = useToast();
   
-  const [options, setOptions] = React.useState<PasswordOptions>({
+  const [options, setOptions] = React.useState<PasswordOptions>(() => ({
     length: 16,
     includeUppercase: true,
     includeLowercase: true,
@@ -22,7 +22,7 @@ export function PasswordGeneratorFeature() {
     includeSymbols: true,
     excludeSimilar: false,
     excludeAmbiguous: false,
-  });
+  }));
 
   const [result, setResult] = React.useState<GeneratedPassword | null>(null);
   const [copying, setCopying] = React.useState(false);
