@@ -3,13 +3,13 @@
 import * as React from "react";
 import { useToast } from "@/shared/hooks/use-toast";
 import { generatePassword, calculateCrackTime, type PasswordOptions, type GeneratedPassword } from "@/domains/password/password-generator";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/components/card";
 import { Button } from "@/shared/ui/components/button";
 import { Slider } from "@/shared/ui/components/slider";
 import { cn } from "@/shared/ui/lib/utils";
 import { PasswordDisplay } from "./ui/password-display";
 import { StrengthIndicator } from "./ui/strength-indicator";
 import { OptionToggle } from "./ui/option-toggle";
+import { Settings2, ChevronDown, ChevronUp } from "lucide-react";
 
 export function PasswordGeneratorFeature() {
   const { toasts, show } = useToast();
@@ -27,6 +27,7 @@ export function PasswordGeneratorFeature() {
   const [result, setResult] = React.useState<GeneratedPassword | null>(null);
   const [copying, setCopying] = React.useState(false);
   const [isGenerating, setIsGenerating] = React.useState(false);
+  const [showSettings, setShowSettings] = React.useState(false);
 
   const handleGenerate = React.useCallback(async () => {
     setIsGenerating(true);
@@ -111,7 +112,7 @@ export function PasswordGeneratorFeature() {
     !options.includeSymbols;
 
   return (
-    <Card className="w-full max-w-xl mx-auto shadow-lg border-slate-200 dark:border-slate-700">
+    <div className="w-full max-w-lg mx-auto">
       {/* Screen reader announcement */}
       <div 
         id="password-announcement" 
@@ -120,117 +121,144 @@ export function PasswordGeneratorFeature() {
         aria-atomic="true"
       />
       
-      <CardHeader className="py-3">
-        <CardTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">
-          Password Generator
-        </CardTitle>
-      </CardHeader>
-      
-      <CardContent className="space-y-3 py-2">
+      {/* Main Password Display - Always Visible */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-6">
         {/* Password Display */}
-        <section aria-label="Generated password">
+        <div className="mb-4">
           <PasswordDisplay
             password={result?.password || ""}
             onCopy={handleCopy}
             onRegenerate={handleRegenerate}
             copying={copying}
           />
-        </section>
+        </div>
 
         {/* Strength Indicator */}
         {result && (
-          <section aria-label="Password strength">
+          <div className="mb-4">
             <StrengthIndicator
               strength={result.strength}
               entropy={result.entropy}
             />
-          </section>
+          </div>
         )}
-
-        {/* Length Slider */}
-        <section aria-label="Password length">
-          <Slider
-            label="Password Length"
-            min={4}
-            max={128}
-            step={1}
-            value={[options.length]}
-            onValueChange={([value]) => updateOption("length", value)}
-            showValue
-          />
-        </section>
-
-        {/* Character Options */}
-        <section aria-label="Character options">
-          <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase mb-1">
-            Character Types
-          </p>
-          <div className="space-y-0">
-            <OptionToggle
-              id="uppercase"
-              label="Uppercase Letters (A-Z)"
-              checked={options.includeUppercase}
-              onChange={(checked) => updateOption("includeUppercase", checked)}
-            />
-            <OptionToggle
-              id="lowercase"
-              label="Lowercase Letters (a-z)"
-              checked={options.includeLowercase}
-              onChange={(checked) => updateOption("includeLowercase", checked)}
-              disabled={isOnlyLowercase}
-            />
-            <OptionToggle
-              id="numbers"
-              label="Numbers (0-9)"
-              checked={options.includeNumbers}
-              onChange={(checked) => updateOption("includeNumbers", checked)}
-            />
-            <OptionToggle
-              id="symbols"
-              label="Symbols (!@#$%^&*)"
-              checked={options.includeSymbols}
-              onChange={(checked) => updateOption("includeSymbols", checked)}
-            />
-          </div>
-        </section>
-
-        {/* Advanced Options */}
-        <section aria-label="Advanced options">
-          <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase mb-1">
-            Advanced Options
-          </p>
-          <div className="space-y-0">
-            <OptionToggle
-              id="exclude-similar"
-              label="Exclude Similar (i, l, 1, O, 0)"
-              checked={options.excludeSimilar}
-              onChange={(checked) => updateOption("excludeSimilar", checked)}
-            />
-            <OptionToggle
-              id="exclude-ambiguous"
-              label="Exclude Ambiguous"
-              checked={options.excludeAmbiguous}
-              onChange={(checked) => updateOption("excludeAmbiguous", checked)}
-            />
-          </div>
-        </section>
-
-        {/* Generate Button */}
-        <Button 
-          onClick={handleGenerate} 
-          disabled={isGenerating}
-          className="w-full h-10 font-semibold transition-all duration-200"
-        >
-          {isGenerating ? "Generating..." : "Generate Password"}
-        </Button>
 
         {/* Crack Time */}
         {crackTime && (
-          <p className="text-sm text-slate-500 dark:text-slate-400 text-center">
+          <p className="text-sm text-slate-500 dark:text-slate-400 text-center mb-4">
             Estimated time to crack: <span className="font-semibold text-slate-700 dark:text-slate-300">{crackTime}</span>
           </p>
         )}
-      </CardContent>
+
+        {/* Quick Actions */}
+        <div className="flex gap-2">
+          <Button 
+            onClick={handleGenerate} 
+            disabled={isGenerating}
+            className="flex-1 h-11 font-semibold"
+          >
+            {isGenerating ? "Generating..." : "Generate New Password"}
+          </Button>
+          
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setShowSettings(!showSettings)}
+            className={cn(
+              "h-11 px-3",
+              showSettings && "bg-slate-100 dark:bg-slate-800"
+            )}
+            aria-expanded={showSettings}
+            aria-controls="advanced-settings"
+          >
+            <Settings2 className="h-4 w-4 mr-2" />
+            Settings
+            {showSettings ? (
+              <ChevronUp className="h-4 w-4 ml-1" />
+            ) : (
+              <ChevronDown className="h-4 w-4 ml-1" />
+            )}
+          </Button>
+        </div>
+
+        {/* Advanced Settings - Collapsible */}
+        {showSettings && (
+          <div 
+            id="advanced-settings"
+            className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 space-y-4"
+          >
+            {/* Length Slider */}
+            <div>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">
+                Password Length: <span className="text-blue-600 dark:text-blue-400 font-mono">{options.length}</span>
+              </label>
+              <Slider
+                min={4}
+                max={128}
+                step={1}
+                value={[options.length]}
+                onValueChange={([value]) => updateOption("length", value)}
+                showValue={false}
+              />
+            </div>
+
+            {/* Character Options */}
+            <div>
+              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase mb-2">
+                Character Types
+              </p>
+              <div className="space-y-1 bg-slate-50 dark:bg-slate-800/50 rounded-lg p-2">
+                <OptionToggle
+                  id="uppercase"
+                  label="Uppercase (A-Z)"
+                  checked={options.includeUppercase}
+                  onChange={(checked) => updateOption("includeUppercase", checked)}
+                />
+                <OptionToggle
+                  id="lowercase"
+                  label="Lowercase (a-z)"
+                  checked={options.includeLowercase}
+                  onChange={(checked) => updateOption("includeLowercase", checked)}
+                  disabled={isOnlyLowercase}
+                />
+                <OptionToggle
+                  id="numbers"
+                  label="Numbers (0-9)"
+                  checked={options.includeNumbers}
+                  onChange={(checked) => updateOption("includeNumbers", checked)}
+                />
+                <OptionToggle
+                  id="symbols"
+                  label="Symbols (!@#$%^&*)"
+                  checked={options.includeSymbols}
+                  onChange={(checked) => updateOption("includeSymbols", checked)}
+                />
+              </div>
+            </div>
+
+            {/* Advanced Options */}
+            <div>
+              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase mb-2">
+                Advanced
+              </p>
+              <div className="space-y-1 bg-slate-50 dark:bg-slate-800/50 rounded-lg p-2">
+                <OptionToggle
+                  id="exclude-similar"
+                  label="Exclude similar (i, l, 1, O, 0)"
+                  checked={options.excludeSimilar}
+                  onChange={(checked) => updateOption("excludeSimilar", checked)}
+                />
+                <OptionToggle
+                  id="exclude-ambiguous"
+                  label="Exclude ambiguous"
+                  checked={options.excludeAmbiguous}
+                  onChange={(checked) => updateOption("excludeAmbiguous", checked)}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Toasts - Accessible */}
       {toasts.length > 0 && (
@@ -271,6 +299,6 @@ export function PasswordGeneratorFeature() {
           ))}
         </div>
       )}
-    </Card>
+    </div>
   );
 }
